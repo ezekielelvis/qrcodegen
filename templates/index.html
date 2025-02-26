@@ -1,0 +1,280 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .range-container {
+            display: flex;
+            align-items: center;
+        }
+        .range-container input[type="range"] {
+            flex: 1;
+        }
+        .range-value {
+            width: 40px;
+            text-align: center;
+            margin-left: 10px;
+        }
+        .color-inputs {
+            display: flex;
+            gap: 10px;
+        }
+        .color-input-group {
+            flex: 1;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .button-group {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .button-group button {
+            margin: 0 5px;
+        }
+        #download-btn {
+            background-color: #2196F3;
+        }
+        #download-btn:hover {
+            background-color: #0b7dda;
+        }
+        .qr-code-container {
+            margin-top: 30px;
+            text-align: center;
+        }
+        #qrcode {
+            max-width: 100%;
+            height: auto;
+            margin: 0 auto;
+            display: block;
+            border: 1px solid #ddd;
+            padding: 10px;
+            background-color: white;
+        }
+        .error {
+            color: red;
+            text-align: center;
+            margin-top: 10px;
+        }
+        .radio-group {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+        .radio-option {
+            margin-right: 10px;
+        }
+        @media (max-width: 600px) {
+            .color-inputs {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>QR Code Generator</h1>
+        
+        <form id="qr-form">
+            <div class="form-group">
+                <label for="data">Text or URL:</label>
+                <input type="text" id="data" name="data" value="https://example.com" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="box-size">Box Size:</label>
+                <div class="range-container">
+                    <input type="range" id="box-size" name="box_size" min="1" max="20" value="10" oninput="updateBoxSizeValue(this.value)">
+                    <span id="box-size-value" class="range-value">10</span>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="border">Border Size:</label>
+                <div class="range-container">
+                    <input type="range" id="border" name="border" min="0" max="10" value="4" oninput="updateBorderValue(this.value)">
+                    <span id="border-value" class="range-value">4</span>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Error Correction Level:</label>
+                <div class="radio-group">
+                    <div class="radio-option">
+                        <input type="radio" id="error-l" name="error_correction" value="L">
+                        <label for="error-l">L (7%)</label>
+                    </div>
+                    <div class="radio-option">
+                        <input type="radio" id="error-m" name="error_correction" value="M">
+                        <label for="error-m">M (15%)</label>
+                    </div>
+                    <div class="radio-option">
+                        <input type="radio" id="error-q" name="error_correction" value="Q">
+                        <label for="error-q">Q (25%)</label>
+                    </div>
+                    <div class="radio-option">
+                        <input type="radio" id="error-h" name="error_correction" value="H" checked>
+                        <label for="error-h">H (30%)</label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Colors:</label>
+                <div class="color-inputs">
+                    <div class="color-input-group">
+                        <label for="fill-color">QR Color:</label>
+                        <input type="color" id="fill-color" name="fill_color" value="#000000">
+                    </div>
+                    <div class="color-input-group">
+                        <label for="back-color">Background Color:</label>
+                        <input type="color" id="back-color" name="back_color" value="#FFFFFF">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="button-group">
+                <button type="button" id="generate-btn">Generate QR Code</button>
+                <button type="button" id="download-btn">Download QR Code</button>
+            </div>
+        </form>
+        
+        <div class="qr-code-container">
+            <img id="qrcode" src="" alt="QR Code will appear here" style="display: none;">
+            <p class="error" id="error-message"></p>
+        </div>
+    </div>
+
+    <script>
+        // Update displayed values for sliders
+        function updateBoxSizeValue(val) {
+            document.getElementById('box-size-value').textContent = val;
+        }
+        
+        function updateBorderValue(val) {
+            document.getElementById('border-value').textContent = val;
+        }
+        
+        // Generate QR code
+        document.getElementById('generate-btn').addEventListener('click', function() {
+            generateQRCode();
+        });
+        
+        // Download QR code
+        document.getElementById('download-btn').addEventListener('click', function() {
+            const form = document.getElementById('qr-form');
+            const formData = new FormData(form);
+            
+            // Submit form to download endpoint
+            const downloadForm = document.createElement('form');
+            downloadForm.method = 'POST';
+            downloadForm.action = '/download';
+            
+            for (const [key, value] of formData.entries()) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = key;
+                input.value = value;
+                downloadForm.appendChild(input);
+            }
+            
+            document.body.appendChild(downloadForm);
+            downloadForm.submit();
+            document.body.removeChild(downloadForm);
+        });
+        
+        // Generate QR code on page load
+        window.onload = function() {
+            generateQRCode();
+            
+            // Also generate on input changes
+            const inputs = document.querySelectorAll('input');
+            inputs.forEach(input => {
+                input.addEventListener('change', function() {
+                    generateQRCode();
+                });
+            });
+            
+            // For text input, generate as you type
+            document.getElementById('data').addEventListener('input', function() {
+                generateQRCode();
+            });
+        };
+        
+        function generateQRCode() {
+            const form = document.getElementById('qr-form');
+            const formData = new FormData(form);
+            const errorMsg = document.getElementById('error-message');
+            
+            fetch('/generate', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const qrImage = document.getElementById('qrcode');
+                    qrImage.src = data.image;
+                    qrImage.style.display = 'block';
+                    errorMsg.style.display = 'none';
+                } else {
+                    errorMsg.textContent = data.error || 'An error occurred';
+                    errorMsg.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                errorMsg.textContent = 'Failed to generate QR code';
+                errorMsg.style.display = 'block';
+            });
+        }
+    </script>
+</body>
+</html>
+        
